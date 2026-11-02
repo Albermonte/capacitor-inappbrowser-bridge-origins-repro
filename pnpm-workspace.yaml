@@ -1,0 +1,2 @@
+patchedDependencies:
+  '@capgo/capacitor-inappbrowser@8.27.0': patches/@capgo__capacitor-inappbrowser@8.27.0.patch
