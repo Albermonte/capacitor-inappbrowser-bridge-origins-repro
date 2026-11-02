@@ -1,3 +1,39 @@
+diff --git a/android/src/main/java/ee/forgr/capacitor_inappbrowser/JavascriptBridgeOriginPolicy.java b/android/src/main/java/ee/forgr/capacitor_inappbrowser/JavascriptBridgeOriginPolicy.java
+index e57adebab90ab013bba54b926415759f7ef24700..7dbfe327a0c1af0c8a9b9b2b3793d44b15b58d17 100644
+--- a/android/src/main/java/ee/forgr/capacitor_inappbrowser/JavascriptBridgeOriginPolicy.java
++++ b/android/src/main/java/ee/forgr/capacitor_inappbrowser/JavascriptBridgeOriginPolicy.java
+@@ -194,7 +194,9 @@ public final class JavascriptBridgeOriginPolicy {
+             return null;
+         }
+         try {
+-            URI uri = new URI(url);
++            // WebView keeps characters java.net.URI rejects (|, {, a bare %) in the path, query and
++            // fragment. Only the scheme and authority decide the origin, so parse just those.
++            URI uri = new URI(stripPathQueryAndFragment(url));
+             String scheme = uri.getScheme();
+             String host = uri.getHost();
+             if (scheme == null || host == null) {
+@@ -206,6 +208,20 @@ public final class JavascriptBridgeOriginPolicy {
+         }
+     }
+ 
++    private static String stripPathQueryAndFragment(String url) {
++        int schemeEnd = url.indexOf("://");
++        if (schemeEnd < 0) {
++            return url;
++        }
++        for (int i = schemeEnd + 3; i < url.length(); i++) {
++            char c = url.charAt(i);
++            if (c == '/' || c == '?' || c == '#') {
++                return url.substring(0, i);
++            }
++        }
++        return url;
++    }
++
+     @Nullable
+     static String normalizeOrigin(String origin) {
+         if (isBlank(origin)) {
 diff --git a/android/src/main/java/ee/forgr/capacitor_inappbrowser/MobileAppBridgeScript.java b/android/src/main/java/ee/forgr/capacitor_inappbrowser/MobileAppBridgeScript.java
 index a418b713521672b1fd408897f2ee60986b45f272..c0a7cbca9b2f495d48fbd533c6e96da863569a4a 100644
 --- a/android/src/main/java/ee/forgr/capacitor_inappbrowser/MobileAppBridgeScript.java
